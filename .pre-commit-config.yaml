@@ -1,0 +1,11 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: rust-format
+        name: run cargo format
+        language: system
+        entry: bash -c 'cd desktop-client && cargo fmt'
+    -   id: cargo-check
+        name: run cargo check
+        language: system
+        entry: bash -c 'cd desktop-client && cargo check'
