@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::ops::{Add, Sub};
 
 /// US Currency.
 /// There is an implicit upper limit of ~$90 quadrillion, which should be sufficient for
@@ -17,15 +18,6 @@ fn sign(num: i64) -> i64 {
     }
 }
 
-impl Display for USD {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let sign = if self.dollars < 0 { "-" } else { "" };
-
-        write!(f, "{}${}.{:02}", sign, self.dollars.abs(), self.cents)
-    }
-}
-
-// TODO: Impl Add/Sub/PartialOrder traits instead of implementing them as methods.
 impl USD {
     // TODO: Replace this with a Result return.
     pub fn new(dollars: i64, cents: usize) -> Self {
@@ -57,13 +49,84 @@ impl USD {
         }
     }
 
-    pub fn add(&self, other: &Self) -> Self {
+    fn _add(&self, other: &Self) -> Self {
         Self::from_cents(self.total_cents + other.total_cents)
     }
 
-    pub fn sub(&self, other: &Self) -> Self {
+    fn _sub(&self, other: &Self) -> Self {
         let inversion = Self::from_cents(other.total_cents * -1);
         self.add(&inversion)
+    }
+}
+
+impl Display for USD {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let sign = if self.dollars < 0 { "-" } else { "" };
+        write!(f, "{}${}.{:02}", sign, self.dollars.abs(), self.cents)
+    }
+}
+
+impl Add<&USD> for &USD {
+    type Output = USD;
+
+    fn add(self, other: &USD) -> USD {
+        self._add(other)
+    }
+}
+
+impl Add<USD> for &USD {
+    type Output = USD;
+
+    fn add(self, other: USD) -> USD {
+        self._add(&other)
+    }
+}
+
+impl Add<&USD> for USD {
+    type Output = USD;
+
+    fn add(self, other: &USD) -> USD {
+        self._add(other)
+    }
+}
+
+impl Add<USD> for USD {
+    type Output = USD;
+
+    fn add(self, other: USD) -> USD {
+        self._add(&other)
+    }
+}
+
+impl Sub<&USD> for &USD {
+    type Output = USD;
+
+    fn sub(self, other: &USD) -> USD {
+        self._sub(other)
+    }
+}
+
+impl Sub<USD> for &USD {
+    type Output = USD;
+
+    fn sub(self, other: USD) -> USD {
+        self._sub(&other)
+    }
+}
+
+impl Sub<&USD> for USD {
+    type Output = USD;
+
+    fn sub(self, other: &USD) -> USD {
+        self._sub(other)
+    }
+}
+
+impl Sub<USD> for USD {
+    type Output = USD;
+
+    fn sub(self, other: USD) -> USD {
+        self._sub(&other)
     }
 }
 
@@ -138,8 +201,8 @@ mod usd_tests {
     fn add_is_commutative() {
         let c1 = USD::new(1, 50);
         let c2 = USD::new(2, 10);
-        let left_sum = c1.add(&c2);
-        let right_sum = c2.add(&c1);
+        let left_sum = &c1 + &c2;
+        let right_sum = &c2 + &c1;
         assert_eq!(left_sum.dollars, right_sum.dollars);
         assert_eq!(left_sum.cents, right_sum.cents);
         assert_eq!(3, left_sum.dollars);
@@ -150,7 +213,7 @@ mod usd_tests {
     fn add_0_returns_same_value() {
         let c1 = USD::new(-1, 50);
         let c2 = USD::new(0, 0);
-        let c3 = c1.add(&c2);
+        let c3 = Add::add(&c1, &c2);
         assert_eq!(c1.dollars, c3.dollars);
         assert_eq!(c1.cents, c3.cents);
     }
@@ -177,7 +240,7 @@ mod usd_tests {
     fn subtract_0() {
         let c1 = USD::new(-1, 50);
         let c2 = USD::new(0, 0);
-        let c3 = c1.add(&c2);
+        let c3 = &c1 + &c2;
         assert_eq!(c1.dollars, c3.dollars);
         assert_eq!(c1.cents, c3.cents);
     }
