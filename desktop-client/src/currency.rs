@@ -1,9 +1,7 @@
 use std::fmt::Display;
 use std::ops::{Add, Sub};
 
-/// US Currency.
-/// There is an implicit upper limit of ~$90 quadrillion, which should be sufficient for
-/// this application.
+/// US Currency supporting values ranging from -92,233,720,368,547,758.08 to 92,233,720,368,547,758.07.
 pub struct USD {
     total_cents: i64,
     dollars: i64,
@@ -19,7 +17,9 @@ fn sign(num: i64) -> i64 {
 }
 
 impl USD {
-    // TODO: Replace this with a Result return.
+    /// Unchecked function for creating new dollar amounts.
+    /// This function will panic for total currency amounts outside of the range
+    /// -2^63 / 100 and 2^63 / 100.
     pub fn new(dollars: i64, cents: usize) -> Self {
         let (carry, remaining_cents) = (cents / 100, cents % 100);
         let carry: i64 = carry.try_into().unwrap();
@@ -130,7 +130,6 @@ impl Sub<USD> for USD {
     }
 }
 
-// TODO: Test large values.
 #[cfg(test)]
 mod usd_tests {
     use super::*;
@@ -151,8 +150,8 @@ mod usd_tests {
 
     #[test]
     fn cents_over_100_should_roll_over_for_positive_inputs() {
-        let c = USD::new(1, 115);
-        assert_eq!(c.dollars, 2);
+        let c = USD::new(1, 1015);
+        assert_eq!(c.dollars, 11);
         assert_eq!(c.cents, 15);
     }
 
@@ -261,6 +260,30 @@ mod usd_tests {
         let c3 = c1.sub(&c2);
         assert_eq!(15, c3.dollars);
         assert_eq!(0, c3.cents);
+    }
+
+    #[test]
+    fn does_not_panic_for_u64_div_100() {
+        USD::new(i64::MAX / 100, (i64::MAX % 100).try_into().unwrap());
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn should_panic_above_upper_limit() {
+        let cents: usize = (i64::MAX % 100).abs().try_into().unwrap();
+        USD::new(i64::MAX / 100, cents + 1);
+    }
+
+    #[test]
+    fn does_not_panic_for_negative_i64_div_100() {
+        USD::new(i64::MIN / 100, (i64::MIN % 100).abs().try_into().unwrap());
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn should_panic_at_lower_limit() {
+        let cents: usize = (i64::MIN % 100).abs().try_into().unwrap();
+        USD::new(i64::MIN / 100, cents + 1);
     }
 }
 
