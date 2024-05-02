@@ -2,7 +2,7 @@ use rug::Integer;
 use std::fmt::Display;
 use std::ops::{Add, Sub};
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq)]
 pub struct USD {
     total_cents: Integer,
 }
@@ -270,6 +270,57 @@ mod usd_ops_tests {
         let c3 = c1.sub(&c2);
         assert_eq!(15, c3.dollars());
         assert_eq!(0, c3.cents());
+    }
+}
+
+#[cfg(test)]
+mod usd_comparison_tests {
+    use super::*;
+
+    #[test]
+    fn positive_and_negative_not_equal() {
+        let c1 = USD::new(100, 0);
+        let c2 = USD::new(-100, 0);
+
+        assert!(c1 != c2);
+    }
+
+    #[test]
+    fn should_not_equate_different_values() {
+        let c1 = USD::new(123, 78);
+        let c2 = USD::new(456, 90);
+
+        assert!(c1 != c2);
+    }
+
+    #[test]
+    fn should_not_equate_values_with_differing_dollar_amounts() {
+        let c1 = USD::new(123, 90);
+        let c2 = USD::new(456, 90);
+
+        assert!(c1 != c2);
+    }
+
+    #[test]
+    fn should_not_equate_values_with_differing_cent_amounts() {
+        let c1 = USD::new(123, 78);
+        let c2 = USD::new(123, 90);
+
+        assert!(c1 != c2);
+    }
+
+    #[test]
+    fn should_equate_equivalent_objs() {
+        let c1 = USD::new(312, 28);
+        let c2 = USD::new(312, 28);
+
+        assert!(c1 == c2);
+    }
+
+    #[test]
+    fn should_equate_ref_with_self() {
+        let c = USD::new(0, 0);
+        assert!(c == c);
     }
 }
 
