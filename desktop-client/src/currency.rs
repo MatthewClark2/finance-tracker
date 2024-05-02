@@ -2,7 +2,7 @@ use rug::Integer;
 use std::fmt::Display;
 use std::ops::{Add, Sub};
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct USD {
     total_cents: Integer,
 }
@@ -274,7 +274,7 @@ mod usd_ops_tests {
 }
 
 #[cfg(test)]
-mod usd_comparison_tests {
+mod usd_equality_tests {
     use super::*;
 
     #[test]
@@ -321,6 +321,55 @@ mod usd_comparison_tests {
     fn should_equate_ref_with_self() {
         let c = USD::new(0, 0);
         assert!(c == c);
+    }
+}
+
+#[cfg(test)]
+mod usd_order_tests {
+    use super::*;
+
+    #[test]
+    fn should_order_positive_amounts() {
+        let c1 = USD::new(52, 71);
+        let c2 = USD::new(52, 73);
+
+        assert!(c1 < c2);
+        assert!(c2 > c1);
+        assert!(c1 <= c2);
+        assert!(c2 >= c1);
+    }
+
+    #[test]
+    fn should_order_negative_amounts() {
+        let c1 = USD::new(-74, 71);
+        let c2 = USD::new(-13, 9);
+
+        assert!(c1 < c2);
+        assert!(c2 > c1);
+        assert!(c1 <= c2);
+        assert!(c2 >= c1);
+    }
+
+    #[test]
+    fn should_order_mixed_amounts() {
+        let c1 = USD::new(-52, 71);
+        let c2 = USD::new(52, 73);
+
+        assert!(c1 < c2);
+        assert!(c2 > c1);
+        assert!(c1 <= c2);
+        assert!(c2 >= c1);
+    }
+
+    #[test]
+    fn should_order_equivalent_values() {
+        let c1 = USD::new(42, 0);
+        let c2 = USD::new(42, 0);
+
+        assert!(!(c1 < c2));
+        assert!(!(c2 > c1));
+        assert!(c1 <= c2);
+        assert!(c2 >= c1);
     }
 }
 
