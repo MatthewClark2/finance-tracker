@@ -288,6 +288,12 @@ mod usd_display_tests {
     }
 
     #[test]
+    fn should_print_multiple_of_10_cents() {
+        let c = USD::new(15, 30);
+        assert_eq!("$15.30", c.to_string());
+    }
+
+    #[test]
     fn should_print_positive_with_single_cents() {
         let c = USD::new(3_705, 7);
         assert_eq!("$3705.07", c.to_string());
