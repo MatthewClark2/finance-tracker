@@ -2,6 +2,7 @@ use rug::Integer;
 use std::fmt::Display;
 use std::ops::{Add, Sub};
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct USD {
     total_cents: Integer,
 }
@@ -23,11 +24,11 @@ impl USD {
         Self::from(dollars * 100 + cents)
     }
 
-    fn dollars(&self) -> Integer {
+    pub fn dollars(&self) -> Integer {
         self.total_cents.clone() / 100
     }
 
-    fn cents(&self) -> u32 {
+    pub fn cents(&self) -> u32 {
         let euclid_remainder = self.total_cents.mod_u(100);
         if self.total_cents < 0 && euclid_remainder != 0 {
             100 - euclid_remainder
@@ -50,16 +51,6 @@ impl USD {
 impl From<Integer> for USD {
     fn from(total_cents: Integer) -> Self {
         Self { total_cents }
-    }
-}
-
-impl TryFrom<f64> for USD {
-    type Error = ();
-
-    fn try_from(value: f64) -> Result<Self, Self::Error> {
-        Integer::from_f64(value * 100.0)
-            .map(|as_cents| Self::from(as_cents))
-            .ok_or(())
     }
 }
 
@@ -135,7 +126,7 @@ impl Sub<USD> for USD {
 }
 
 #[cfg(test)]
-mod usd_tests {
+mod usd_creation_tests {
     use super::*;
 
     #[test]
@@ -190,6 +181,21 @@ mod usd_tests {
         assert_eq!(0, c.dollars());
         assert_eq!(0, c.cents());
     }
+
+    #[test]
+    fn does_not_panic_for_huge_positive_values() {
+        USD::new(i64::MAX, 275);
+    }
+
+    #[test]
+    fn does_not_panic_for_huge_negative_values() {
+        USD::new(i64::MIN, 399);
+    }
+}
+
+#[cfg(test)]
+mod usd_ops_tests {
+    use super::*;
 
     #[test]
     fn can_add_negative_currency_amounts() {
@@ -265,15 +271,40 @@ mod usd_tests {
         assert_eq!(15, c3.dollars());
         assert_eq!(0, c3.cents());
     }
+}
+
+#[cfg(test)]
+mod usd_conversion_tests {
+    use super::*;
 
     #[test]
-    fn does_not_panic_for_huge_positive_values() {
-        USD::new(i64::MAX, 275);
+    fn should_convert_from_0i() {
+        let c: USD = USD::from(Integer::new());
+        assert_eq!(c.dollars(), 0);
+        assert_eq!(c.cents(), 0);
     }
 
     #[test]
-    fn does_not_panic_for_huge_negative_values() {
-        USD::new(i64::MIN, 399);
+    fn should_convert_from_trivial_positive_integer() {
+        let c: USD = USD::from(Integer::from(255_73));
+        assert_eq!(c.dollars(), 255);
+        assert_eq!(c.cents(), 73);
+    }
+
+    #[test]
+    fn should_convert_from_trivial_negative_integer() {
+        let c: USD = USD::from(Integer::from(-255_73));
+        assert_eq!(c.dollars(), -255);
+        assert_eq!(c.cents(), 73);
+    }
+
+    #[test]
+    fn should_convert_from_massive_integer() {
+        let value = u128::MAX;
+        let cents: u32 = (value % 100).try_into().unwrap();
+        let c: USD = USD::from(Integer::from(u128::MAX));
+        assert_eq!(c.dollars(), u128::MAX / 100);
+        assert_eq!(c.cents(), cents);
     }
 }
 
