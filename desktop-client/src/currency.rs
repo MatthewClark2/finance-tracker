@@ -8,13 +8,13 @@ pub struct USD {
 }
 
 impl USD {
-    pub fn new(dollars: i64, cents: usize) -> Self {
+    pub fn new(dollars: i64, cents: u32) -> Self {
         let carry = cents / 100;
-        let remaining_cents: i64 = (cents % 100).try_into().unwrap();
+        let remaining_cents: i64 = (cents % 100).into();
 
         let sign: i64 = if dollars < 0 { -1 } else { 1 };
 
-        let carry: i64 = carry.try_into().unwrap();
+        let carry: i64 = carry.into();
         let carry = carry * sign;
 
         let dollars = Integer::from(dollars);
